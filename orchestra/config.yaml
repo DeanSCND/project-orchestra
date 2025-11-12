@@ -1,0 +1,15 @@
+tools:
+  claude:
+    wrapper: ./packages/agent-wrappers/claude-wrapper.sh
+  droid:
+    wrapper: ./packages/agent-wrappers/droid-wrapper.sh
+  cursor:
+    wrapper: ./packages/agent-wrappers/cursor-wrapper.sh
+  aider:
+    wrapper: ./packages/agent-wrappers/aider-wrapper.sh
+
+routing:
+  frontend: cursor
+  backend: droid
+  git: aider
+  default: droid
