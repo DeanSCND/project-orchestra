@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Dict, Iterable, List
+from typing import Deque, Dict, Iterable
 
 from fastapi import WebSocket
 
@@ -32,20 +32,20 @@ class Connection:
 
 class ConnectionManager:
     def __init__(self, *, max_messages_per_second: int = 10) -> None:
-        self._connections: List[Connection] = []
+        self._connections: Dict[int, Connection] = {}
         self._max_messages_per_second = max_messages_per_second
 
     async def connect(self, websocket: WebSocket, *, subject: str, metadata: Dict[str, str]) -> Connection:
         await websocket.accept()
         connection = Connection(websocket=websocket, subject=subject, metadata=metadata)
-        self._connections.append(connection)
+        self._connections[id(websocket)] = connection
         return connection
 
     def disconnect(self, websocket: WebSocket) -> None:
-        self._connections = [conn for conn in self._connections if conn.websocket is not websocket]
+        self._connections.pop(id(websocket), None)
 
     async def broadcast(self, payload: Dict) -> None:
-        for connection in list(self._connections):
+        for connection in list(self._connections.values()):
             await connection.websocket.send_json(payload)
 
     async def handle_incoming(self, connection: Connection, message: Dict) -> Dict:
@@ -63,4 +63,4 @@ class ConnectionManager:
         return envelope
 
     def list_subjects(self) -> Iterable[str]:
-        return [conn.subject for conn in self._connections]
+        return [conn.subject for conn in self._connections.values()]

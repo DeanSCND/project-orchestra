@@ -8,7 +8,7 @@ from typing import Dict
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient, decode
-from jwt.exceptions import InvalidTokenError
+from jwt.exceptions import InvalidTokenError, PyJWKClientError
 
 from .config import Settings, load_settings
 
@@ -41,6 +41,10 @@ def verify_jwt(token: str) -> Dict:
         )
     except InvalidTokenError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token") from exc
+    except (PyJWKClientError, OSError) as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="jwks_unavailable") from exc
+    except Exception as exc:  # pragma: no cover - defensive
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_token") from exc
     return claims
 
 
